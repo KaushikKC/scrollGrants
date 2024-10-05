@@ -4,9 +4,7 @@ pragma solidity ^0.8.9;
 import "./IAIOracle.sol";
 import "./AIOracleCallbackReceiver.sol";
 
-// this contract is for ai.ora.io website
 contract ORALLM is AIOracleCallbackReceiver {
-
     event promptsUpdated(
         uint256 requestId,
         uint256 modelId,
@@ -17,7 +15,7 @@ contract ORALLM is AIOracleCallbackReceiver {
 
     event promptRequest(
         uint256 requestId,
-        address sender, 
+        address sender,
         uint256 modelId,
         string prompt
     );
@@ -54,37 +52,64 @@ contract ORALLM is AIOracleCallbackReceiver {
         callbackGasLimit[9] = 5_000_000; // grok
     }
 
-    function setCallbackGasLimit(uint256 modelId, uint64 gasLimit) external onlyOwner {
+    function setCallbackGasLimit(
+        uint256 modelId,
+        uint64 gasLimit
+    ) external onlyOwner {
         callbackGasLimit[modelId] = gasLimit;
     }
 
     // uint256: modelID => (string: prompt => string: output)
     mapping(uint256 => mapping(string => string)) public prompts;
 
-    function getAIResult(uint256 modelId, string calldata prompt) external view returns (string memory) {
+    function getAIResult(
+        uint256 modelId,
+        string calldata prompt
+    ) external view returns (string memory) {
         return prompts[modelId][prompt];
-
     }
 
     // the callback function, only the AI Oracle can call this function
-    function aiOracleCallback(uint256 requestId, bytes calldata output, bytes calldata callbackData) external override onlyAIOracleCallback() {
+    function aiOracleCallback(
+        uint256 requestId,
+        bytes calldata output,
+        bytes calldata callbackData
+    ) external override onlyAIOracleCallback {
         // since we do not set the callbackData in this example, the callbackData should be empty
         AIOracleRequest storage request = requests[requestId];
         require(request.sender != address(0), "request not exists");
         request.output = output;
         prompts[request.modelId][string(request.input)] = string(output);
-        emit promptsUpdated(requestId, request.modelId, string(request.input), string(output), callbackData);
+        emit promptsUpdated(
+            requestId,
+            request.modelId,
+            string(request.input),
+            string(output),
+            callbackData
+        );
     }
 
     function estimateFee(uint256 modelId) public view returns (uint256) {
         return aiOracle.estimateFee(modelId, callbackGasLimit[modelId]);
     }
 
-    function calculateAIResult(uint256 modelId, string calldata prompt) payable external {
-        bytes memory input = bytes(prompt);
+    function calculateAIResult(
+        uint256 modelId,
+        string calldata prompt
+    ) external payable {
+        string
+            memory instruction = "From the given Round details and projects applied answer to the questions asked.";
+        string memory fullPrompt = string(
+            abi.encodePacked(prompt, " ", instruction)
+        );
+        bytes memory input = bytes(fullPrompt);
         // we do not need to set the callbackData in this example
         uint256 requestId = aiOracle.requestCallback{value: msg.value}(
-            modelId, input, address(this), callbackGasLimit[modelId], ""
+            modelId,
+            input,
+            address(this),
+            callbackGasLimit[modelId],
+            ""
         );
         AIOracleRequest storage request = requests[requestId];
         request.input = input;

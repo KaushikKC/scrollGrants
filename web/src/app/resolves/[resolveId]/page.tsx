@@ -78,10 +78,6 @@ function DistributeFunds({ resolveId }: { resolveId: string }) {
 }
 
 export default function Page({ params }: { params: { resolveId: string } }) {
-  const [show, setShow] = useState(false);
-  const [chatResponse, setChatResponse] = useState(null);
-  const [gaiaLoading, setGaiaLoading] = useState(false);
-  const [query, setQuery] = useState("");
   const [data, setData] = useState<any>(null);
 
   const { resolveId } = params;
@@ -124,7 +120,7 @@ export default function Page({ params }: { params: { resolveId: string } }) {
       });
       console.log(gasFee);
 
-      const appendedMessage = data + " " + prompt;
+      const appendedMessage = JSON.stringify(data) + " " + prompt;
       const txHash = await opSepoliaClient.writeContract({
         address: ORAAI_CONTRACT_ADDRESS,
         abi: ORAAI_ABI,
@@ -138,7 +134,7 @@ export default function Page({ params }: { params: { resolveId: string } }) {
           address: ORAAI_CONTRACT_ADDRESS,
           abi: ORAAI_ABI,
           functionName: "getAIResult",
-          args: [11, prompt],
+          args: [11, appendedMessage],
         });
 
         console.log(result);
@@ -211,10 +207,11 @@ export default function Page({ params }: { params: { resolveId: string } }) {
                 <div>
                   Applications close in{" "}
                   <span className="font-semibold">
-                    {data && data.endDate
-                      ? daysLeftToDate(data.endDate)
+                    {data && !data.isActive
+                      ? "closed"
+                      : data && data.endDate
+                      ? `${daysLeftToDate(data.endDate)}Days`
                       : "N/A"}{" "}
-                    Days
                   </span>
                 </div>
               </div>
@@ -296,7 +293,13 @@ export default function Page({ params }: { params: { resolveId: string } }) {
           <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
             Quadratic Funding
           </span>
-          <DistributeFunds resolveId={resolveId} />
+          {data && data.isActive ? (
+            <DistributeFunds resolveId={resolveId} />
+          ) : (
+            <div className="text-white font-bold py-2 px-4 rounded bg-green-400 cursor-not-allowed">
+              Funds Distributed
+            </div>
+          )}
         </div>
 
         <p className="text-base text-gray-900 mb-6 mt-3">
