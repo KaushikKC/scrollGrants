@@ -19,6 +19,7 @@ export const getProjectData = async (id: string) => {
             round {
               endDate
               startDate
+              isActive
             }
             teamSize
             totalDonations

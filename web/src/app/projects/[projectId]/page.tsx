@@ -14,7 +14,7 @@ import {
 import MainLayout from "@/components/layouts/MainLayout";
 import Link from "next/link";
 import { RotatingLines } from "react-loader-spinner";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 
 import { useAccount, useWriteContract } from "wagmi";
 import { contract } from "@/lib/contract";
@@ -22,6 +22,7 @@ import { useSearchParams } from "next/navigation";
 import { getProjectData } from "@/lib/graphHelper/project";
 import { daysLeftToDate } from "@/app/resolves/page";
 import { parseEther } from "viem";
+import { client } from "@/lib/viem";
 // import { client } from "@/lib/viem";
 
 function ClaimFundsButton({
@@ -58,10 +59,10 @@ function ClaimFundsButton({
         type="button"
         onClick={claimFunds}
         disabled={isLoading}
-        className={`w-full flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-base font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+        className={` w-full flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-base font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
           isLoading
             ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-            : "bg-white text-gray-700 hover:bg-gray-50"
+            : "bg-[#FF6B4A] text-gray-700 hover:bg-gray-50"
         }`}
       >
         {isLoading ? "Claiming..." : "Claim Rewards"}
@@ -70,6 +71,110 @@ function ClaimFundsButton({
         <p className="mt-2 text-sm text-green-600">
           Funds claimed successfully!
         </p>
+      )}
+      {isError && (
+        <p className="mt-2 text-sm text-red-600">Error: {error?.message}</p>
+      )}
+    </div>
+  );
+}
+
+function TopUpButton({ topUpAmount }: { topUpAmount: string }) {
+  const {
+    writeContract,
+    isPending: isLoading,
+    isSuccess,
+    isError,
+    error,
+  } = useWriteContract();
+
+  const claimFunds = async () => {
+    try {
+      writeContract({
+        address: contract.address as `0x${string}`,
+        abi: contract.abi,
+        functionName: "topUpBalance",
+        value: parseEther(topUpAmount),
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={claimFunds}
+        disabled={isLoading}
+        className={`bg-[#FF6B4A] w-full flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-base font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+          isLoading
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+            : "bg-[#FF6B4A] text-gray-700 hover:bg-gray-50"
+        }`}
+      >
+        {isLoading ? "processing..." : "Top Up"}
+      </button>
+      {isSuccess && (
+        <p className="mt-2 text-sm text-green-600">TopUp successfully!</p>
+      )}
+      {isError && (
+        <p className="mt-2 text-sm text-red-600">Error: {error?.message}</p>
+      )}
+    </div>
+  );
+}
+
+function ContributeButton({
+  contributeAmount,
+  projectId,
+  roundId,
+}: {
+  contributeAmount: string;
+  projectId: string;
+  roundId: string;
+}) {
+  const {
+    writeContract,
+    isPending: isLoading,
+    isSuccess,
+    isError,
+    error,
+  } = useWriteContract();
+
+  const contribute = async () => {
+    try {
+      writeContract({
+        address: contract.address as `0x${string}`,
+        abi: contract.abi,
+        functionName: "donate",
+        args: [
+          BigInt(roundId),
+          BigInt(projectId),
+          parseEther(contributeAmount),
+        ],
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={contribute}
+        disabled={isLoading}
+        className={`bg-[#FF6B4A] w-full flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-base font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+          isLoading
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+            : "bg-[#FF6B4A] text-gray-700 hover:bg-gray-50"
+        }`}
+      >
+        {isLoading ? "processing..." : "Contribute"}
+      </button>
+      {isSuccess && (
+        <p className="mt-2 text-sm text-green-600">Contributed successfully!</p>
       )}
       {isError && (
         <p className="mt-2 text-sm text-red-600">Error: {error?.message}</p>
@@ -116,6 +221,7 @@ export default function Page({ params }: { params: { projectId: string } }) {
   }, [currentTab]);
 
   const { projectId } = params;
+  const ids = splitString(projectId as string);
 
   const {
     writeContract,
@@ -125,7 +231,7 @@ export default function Page({ params }: { params: { projectId: string } }) {
     error,
   } = useWriteContract();
 
-  const [amount, setAmount] = useState(0);
+  const [amount, setAmount] = useState("0");
   function splitString(input: string, delimiter: string = "-"): string[] {
     return input.split(delimiter);
   }
@@ -167,18 +273,6 @@ export default function Page({ params }: { params: { projectId: string } }) {
   // Top up
 
   const [topUpAmount, setTopUpAmount] = useState("0");
-  const topUp = () => {
-    try {
-      writeContract({
-        address: contract.address as `0x${string}`,
-        abi: contract.abi,
-        functionName: "topUpBalance",
-        args: [parseEther(topUpAmount)],
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
   //Fetch Balance
   const [balance, setBalance] = useState("0");
@@ -186,16 +280,16 @@ export default function Page({ params }: { params: { projectId: string } }) {
   //   const account = "0xd69a4dd0dfb261a8EF37F45925491C077EF1dBFb";
   const account = useAccount().address;
   const BalanceFetching = async () => {
-    // const fetchBalance = await client.readContract({
-    //   address: contract.address as `0x${string}`,
-    //   abi: contract.abi,
-    //   functionName: "balances",
-    //   args: [account],
-    // });
-    // if (fetchBalance) {
-    //   console.log(fetchBalance);
-    //   setBalance(fetchBalance.toString());
-    // }
+    const fetchBalance = await client.readContract({
+      address: contract.address as `0x${string}`,
+      abi: contract.abi,
+      functionName: "balances",
+      args: [account],
+    });
+    if (fetchBalance) {
+      console.log(fetchBalance);
+      setBalance(fetchBalance.toString());
+    }
   };
 
   useEffect(() => {
@@ -203,6 +297,10 @@ export default function Page({ params }: { params: { projectId: string } }) {
       BalanceFetching();
     }
   }, [account]);
+
+  //   useEffect(() => {
+  //     console.log(error);
+  //   }, [isError]);
 
   return (
     <MainLayout>
@@ -290,11 +388,9 @@ export default function Page({ params }: { params: { projectId: string } }) {
                   {project && project.twitterUrl}
                 </Link>
               </div>
-
-              <ClaimFundsButton
-                resolveId={resolveId || ""}
-                projectId={projectId}
-              />
+              {project && project.round.isActive ? (
+                <ClaimFundsButton resolveId={"0"} projectId={"1"} />
+              ) : null}
             </div>
 
             {/* Tabs */}
@@ -346,6 +442,9 @@ export default function Page({ params }: { params: { projectId: string } }) {
                         </p>
                       </div>
                     </div>
+                    <div className="mt-8 font-bold">
+                      ** Kidly Top up first to Contribute to a project **
+                    </div>
                     <div className="mt-4">
                       <label
                         htmlFor="topUpAmount"
@@ -373,16 +472,7 @@ export default function Page({ params }: { params: { projectId: string } }) {
                           </span>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        className="w-full flex items-center justify-center rounded-md border border-transparent bg-orange-500 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
-                        onClick={async () => {
-                          console.log(topUpAmount);
-                          topUp();
-                        }}
-                      >
-                        Top Up
-                      </button>
+                      <TopUpButton topUpAmount={topUpAmount} />
                     </div>
                   </div>
                 )}
@@ -426,15 +516,16 @@ export default function Page({ params }: { params: { projectId: string } }) {
                         Funding received in current round
                       </p>
                       <p className="text-2xl font-bold text-primary-600">
-                        {project && project.totalDonations}
+                        {project && parseInt(project.totalDonations) / 10 ** 18}{" "}
+                        ETH
                       </p>
                     </div>
-                    <div>
+                    {/* <div>
                       <p className="text-sm text-gray-500">Contributors</p>
                       <p className="text-2xl font-bold text-primary-600">
                         {project && project.donors ? project.donors.length : 0}
                       </p>
-                    </div>
+                    </div> */}
                     <div>
                       <p className="text-sm text-gray-500">Time remaining</p>
                       <p className="text-2xl font-bold text-primary-600">
@@ -463,7 +554,7 @@ export default function Page({ params }: { params: { projectId: string } }) {
                         placeholder="0.00"
                         aria-describedby="amount-currency"
                         value={amount}
-                        onChange={(e) => setAmount(Number(e.target.value))}
+                        onChange={(e) => setAmount(e.target.value)}
                       />
                       <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                         <span
@@ -475,7 +566,9 @@ export default function Page({ params }: { params: { projectId: string } }) {
                       </div>
                     </div>
 
-                    <div>Available Balance : {balance} ETH</div>
+                    <div>
+                      Available Balance : {parseInt(balance) / 10 ** 18} ETH
+                    </div>
                   </div>
                   <button
                     type="submit"
@@ -498,13 +591,11 @@ export default function Page({ params }: { params: { projectId: string } }) {
                       <span>Contribute</span>
                     )}
                   </button>
-                  <button
-                    type="button"
-                    onClick={contribute}
-                    className="w-full flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                  >
-                    Claim Rewards
-                  </button>
+                  <ContributeButton
+                    projectId={ids[1]}
+                    roundId={ids[0]}
+                    contributeAmount={amount.toString()}
+                  />
                 </div>
               </div>
             </div>
