@@ -7,14 +7,14 @@ import { useWriteContract } from "wagmi";
 
 export default function Page({ params }: { params: { resolveId: string } }) {
   // const resolveId = params?.resolveId
-  const resolveId = "3";
+  const resolveId = "0";
   const [projectName, setProjectName] = useState("");
   const [osoName, setOsoName] = useState("");
   const [website, setWebsite] = useState("");
   const [twitterUrl, setTwitterUrl] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
-  const [teamSize, setTeamSize] = useState("");
+  const [teamSize, setTeamSize] = useState("4");
   const [projectDescription, setProjectDescription] = useState("");
   const [createProjectLoading, setCreateProjectLoading] = useState(false);
 

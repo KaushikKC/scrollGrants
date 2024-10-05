@@ -36,7 +36,7 @@ export default function CreateRound() {
     // Get form data
     const formData = new FormData(e.currentTarget);
     const roundData = {
-      projectName: formData.get("projectName") as string,
+      roundName: formData.get("roundName") as string,
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
       matchingPool: formData.get("matchingPool") as string,
@@ -96,15 +96,15 @@ export default function CreateRound() {
                 <div className="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                   <div className="sm:col-span-4">
                     <label
-                      htmlFor="projectName"
+                      htmlFor="roundName"
                       className="block text-xl font-medium leading-6 text-gray-900"
                     >
                       <h1>Resolve Name</h1>
                     </label>
                     <div className="mt-2">
                       <input
-                        id="projectName"
-                        name="projectName"
+                        id="roundName"
+                        name="roundName"
                         type="text"
                         placeholder="What's the project name?"
                         className="pl-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"

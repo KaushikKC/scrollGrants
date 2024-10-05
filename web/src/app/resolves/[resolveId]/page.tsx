@@ -15,7 +15,7 @@ import axios from "axios";
 import Markdown from "react-markdown";
 import { ThreeDots } from "react-loader-spinner";
 import { contract } from "@/lib/contract";
-import { useReadContract } from "wagmi";
+import { useReadContract, useWriteContract } from "wagmi";
 
 interface Project {
   network: string;
@@ -85,6 +85,59 @@ const projects = [
     teamSize: 76,
   },
 ];
+
+function DistributeFunds({ resolveId }: { resolveId: string }) {
+  const { writeContract, isPending, isSuccess } = useWriteContract();
+
+  const distributeFunds = async () => {
+    writeContract({
+      address: contract.address as `0x${string}`,
+      abi: contract.abi,
+      functionName: "distributeFunds",
+      args: [parseInt(resolveId)],
+    });
+  };
+
+  return (
+    <button
+      className={`text-white font-bold py-2 px-4 rounded ${
+        isPending
+          ? "bg-gray-400 cursor-not-allowed"
+          : isSuccess
+          ? "bg-green-500 hover:bg-green-600"
+          : "bg-orange-500 hover:bg-orange-600"
+      }`}
+      onClick={distributeFunds}
+      disabled={isPending}
+    >
+      {isPending ? (
+        <div className="flex items-center">
+          <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="none"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
+          Processing...
+        </div>
+      ) : isSuccess ? (
+        "Funds Distributed!"
+      ) : (
+        "Distribute Funds"
+      )}
+    </button>
+  );
+}
 
 export default function Page({ params }: { params: { resolveId: string } }) {
   const [show, setShow] = useState(false);
@@ -222,10 +275,11 @@ export default function Page({ params }: { params: { resolveId: string } }) {
           </div>
         </div>
 
-        <div>
+        <div className="flex justify-end space-x-2">
           <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
             Quadratic Funding
           </span>
+          <DistributeFunds resolveId={resolveId} />
         </div>
 
         <p className="text-base text-gray-900 mb-6 mt-3">
@@ -401,7 +455,10 @@ const Card: React.FC<Project> = ({
   };
 
   return (
-    <div className="bg-gray-100 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+    <Link
+      href={`/projects/${name}`}
+      className="bg-gray-100 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
+    >
       <div className="relative overflow-hidden" onClick={handleClick}>
         <img
           className="w-full h-48 object-cover"
@@ -423,6 +480,6 @@ const Card: React.FC<Project> = ({
           {description}
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
