@@ -1,0 +1,44 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: ScrollGrant
+    network: scroll-sepolia
+    source:
+      address: "0xfdDCbc3Bb1E96f8a970dF64C09393179FD50ab73"
+      abi: ScrollGrant
+      startBlock: 6865088
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - BalanceToppedUp
+        - ProjectApplied
+        - ProjectDonated
+        - ProjectFundsWithdrawn
+        - RoundCreated
+        - RoundDeactivated
+        - RoundEdited
+      abis:
+        - name: ScrollGrant
+          file: ./abis/ScrollGrant.json
+      eventHandlers:
+        - event: BalanceToppedUp(indexed address,uint256)
+          handler: handleBalanceToppedUp
+        - event: ProjectApplied(indexed uint256,indexed uint256,indexed address,string)
+          handler: handleProjectApplied
+        - event: ProjectDonated(indexed uint256,indexed uint256,indexed address,uint256)
+          handler: handleProjectDonated
+        - event: ProjectFundsWithdrawn(indexed uint256,indexed uint256,indexed address,uint256)
+          handler: handleProjectFundsWithdrawn
+        - event: RoundCreated(indexed uint256,indexed address,string,uint256)
+          handler: handleRoundCreated
+        - event: RoundDeactivated(indexed uint256,indexed address,uint256)
+          handler: handleRoundDeactivated
+        - event: RoundEdited(indexed uint256,string)
+          handler: handleRoundEdited
+      file: ./src/scroll-grant.ts

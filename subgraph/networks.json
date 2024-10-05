@@ -1,0 +1,8 @@
+{
+  "scroll-sepolia": {
+    "ScrollGrant": {
+      "address": "0xfdDCbc3Bb1E96f8a970dF64C09393179FD50ab73",
+      "startBlock": 6865088
+    }
+  }
+}
