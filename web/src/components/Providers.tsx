@@ -19,19 +19,12 @@ import {
 } from "wagmi/chains";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 const queryClient = new QueryClient();
+import { PopupProvider } from "@/components/PopUpContext";
 
 const config = getDefaultConfig({
-  appName: "Some App",
+  appName: "resolve",
   projectId: process.env.NEXT_PUBLIC_PROJECT_ID || "",
-  chains: [
-    // mainnet,
-    // optimism,
-    // arbitrum,
-    // sepolia,
-    // optimismSepolia,
-    // arbitrumSepolia,
-    scrollSepolia,
-  ],
+  chains: [scrollSepolia],
   ssr: true, // If your dApp uses server side rendering (SSR)
 });
 
@@ -58,7 +51,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <PopupProvider>{children}</PopupProvider>
           </ThemeProvider>
         </RainbowKitProvider>
       </QueryClientProvider>

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { IDKitWidget, VerificationLevel } from "@worldcoin/idkit";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 export default function WorldCoinConnect() {
   const [worldcoinVerified, setWorldcoinVerified] = useState(false);
@@ -58,18 +59,23 @@ export default function WorldCoinConnect() {
           verification_level={VerificationLevel.Device}
         >
           {({ open }) => (
-            <div
-              className="font-bold text-lg pt-1 text-zinc-600 cursor-pointer"
+            <button
+              className="flex items-center font-bold text-lg px-4 py-2 bg-black text-white rounded-md cursor-pointer"
               onClick={open}
             >
-              Get started
-            </div>
+              <img
+                src="https://i.ibb.co/P4mg2Z9/image.png"
+                alt=""
+                className="rounded-full h-8 w-8 mr-2"
+              />
+              Get Started
+            </button>
           )}
         </IDKitWidget>
       ) : (
         <div className="text-right mt-1 mr-1">
           <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full">
-            Worldcoin ✅{" "}
+            <ConnectButton label="Connect Wallet" />
           </span>
         </div>
       )}
