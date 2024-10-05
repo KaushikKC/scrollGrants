@@ -388,9 +388,9 @@ export default function Page({ params }: { params: { projectId: string } }) {
                   {project && project.twitterUrl}
                 </Link>
               </div>
-              {project && project.round.isActive ? (
+              {project && project.round && !project.round.isActive && (
                 <ClaimFundsButton resolveId={"0"} projectId={"1"} />
-              ) : null}
+              )}
             </div>
 
             {/* Tabs */}

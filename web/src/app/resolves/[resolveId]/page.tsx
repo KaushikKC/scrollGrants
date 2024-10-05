@@ -18,59 +18,11 @@ import { useReadContract, useWriteContract } from "wagmi";
 import { getRoundData } from "@/lib/graphHelper/roundData";
 import { daysLeftToDate } from "../page";
 
-const projects = [
-  {
-    network: "Ethereum",
-    name: "MesonFi",
-    openSourceObserverName: "MesonFi",
-    website: "https://meson.fi/",
-    projectLogoUrl:
-      "https://docs.meson.fi/~gitbook/image?url=https%3A%2F%2F1966107664-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252FWJ9Xuoax4XwtI4AskpIb%252Ficon%252FL1gVbDPzMVPwHEi51o4W%252Flogo192.png%3Falt%3Dmedia%26token%3D4f3d4d82-dd19-4ddb-b9ce-eaa23cfdb32f&width=32&dpr=1&quality=100&sign=a1a21306&sv=1",
-    projectCoverUrl:
-      "https://images.unsplash.com/photo-1444628838545-ac4016a5418a?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80",
-    description:
-      "MesonFi is a decentralized finance platform that allows users to earn interest on their crypto assets.",
-    createdDate: "2024-07-16T00:00:00.000Z",
-    twitterUrl: "https://twitter.com/mesonfi",
-    ownerAddress: "0xD1Ffeuo47briwgyfwi7b4749gbwig979bh6Caa",
-    fundingSources: "None",
-    teamSize: 1,
-  },
-  {
-    network: "Ethereum",
-    name: "Mean Finance",
-    openSourceObserverName: "Mean Finance",
-    website: "https://www.meanfi.com/",
-    projectLogoUrl:
-      "https://firebasestorage.googleapis.com/v0/b/standards-site-beta.appspot.com/o/documents%2Foeiyd2iaxj1%2Fn6qzjbhgm41%2FInstagram%20post%20-%202_1703711275815_1000x1000.png?alt=media&token=evthxq3nrct",
-    projectCoverUrl:
-      "https://firebasestorage.googleapis.com/v0/b/standards-site-beta.appspot.com/o/documents%2Foeiyd2iaxj1%2Fn6qzjbhgm41%2FBackground%20m%20(11)_1703709966262_1000x1000.png?alt=media&token=qdeg1w8omym",
-    description:
-      "Mean Finance is a financial ecosystem of products, platforms, and people coming together around a common goal: To accelerate the world’s transition to decentralized finance ecosystems and bring economic equality and opportunity to individuals and organizations everywhere.",
-    createdDate: "2024-07-16T00:00:00.000Z",
-    twitterUrl: "https://twitter.com/meanfinance",
-    ownerAddress: "0xD1Ffeuo47briwgyfwi7b4749gbwig979bh6Caa",
-    fundingSources: "Google",
-    teamSize: 45,
-  },
-  {
-    network: "Ethereum",
-    name: "Maverick",
-    openSourceObserverName: "Maverick",
-    website: "https://www.mav.xyz/",
-    projectLogoUrl:
-      "https://docs.mav.xyz/~gitbook/image?url=https%3A%2F%2F3522878855-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252F1irpxOULWWoYXAKrwP4H%252Ficon%252Fb8lZ7Er8bK0ImnSi5Pun%252Fmav-symbol-color.png%3Falt%3Dmedia%26token%3Dd3007dee-7574-473e-9713-c1647a08f2f5&width=32&dpr=1&quality=100&sign=8c64fb19&sv=1",
-    projectCoverUrl:
-      "https://docs.mav.xyz/~gitbook/image?url=https%3A%2F%2F3522878855-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252F1irpxOULWWoYXAKrwP4H%252Fuploads%252Ffbh8VV1ftsODHaUwxGXQ%252FUpdated%2520Litepaper%2520Banner.png%3Falt%3Dmedia%26token%3D76b414ee-cc2d-4893-88aa-93e57be52f6f&width=768&dpr=1&quality=100&sign=423de1ed&sv=1",
-    description:
-      "Maverick Protocol offers a new infrastructure for decentralized finance, built to facilitate the most liquid markets for traders, liquidity providers, DAO treasuries, and developers, powered by a revolutionary Automated Market Maker (AMM).",
-    createdDate: "2024-07-16T00:00:00.000Z",
-    twitterUrl: "https://x.com/mavprotocol",
-    ownerAddress: "0xD1Ffeuo47briwgyfwi7b4749gbwig979bh6Caa",
-    fundingSources: "Coinbase",
-    teamSize: 76,
-  },
-];
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ORAAI_ABI, ORAAI_CONTRACT_ADDRESS } from "@/lib/const";
+import { opSepoliaClient, opSepoliaPublicClient } from "@/lib/viem";
 
 function DistributeFunds({ resolveId }: { resolveId: string }) {
   const { writeContract, isPending, isSuccess } = useWriteContract();
@@ -144,6 +96,77 @@ export default function Page({ params }: { params: { resolveId: string } }) {
   }, []);
 
   const isDataLoading = false;
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState<{ text: string; isUser: boolean }[]>(
+    [
+      {
+        text: "Hello! I am your Grant assistant.Lemme get you the projects in this round for you !",
+        isUser: false,
+      },
+    ]
+  );
+  const [inputMessage, setInputMessage] = useState("");
+
+  const handleSendMessage = async () => {
+    if (inputMessage.trim()) {
+      setMessages([...messages, { text: inputMessage, isUser: true }]);
+      const prompt = inputMessage;
+      setInputMessage("");
+      // Simulate bot response
+      setLoading(true);
+      const gasFee = await opSepoliaPublicClient.readContract({
+        address: ORAAI_CONTRACT_ADDRESS,
+        abi: ORAAI_ABI,
+        functionName: "estimateFee",
+        args: [11],
+      });
+      console.log(gasFee);
+
+      const appendedMessage = data + " " + prompt;
+      const txHash = await opSepoliaClient.writeContract({
+        address: ORAAI_CONTRACT_ADDRESS,
+        abi: ORAAI_ABI,
+        functionName: "calculateAIResult",
+        args: [11, appendedMessage],
+        value: gasFee as bigint,
+      });
+
+      const pollResult = async () => {
+        const result = await opSepoliaPublicClient.readContract({
+          address: ORAAI_CONTRACT_ADDRESS,
+          abi: ORAAI_ABI,
+          functionName: "getAIResult",
+          args: [11, prompt],
+        });
+
+        console.log(result);
+        if (
+          result &&
+          result !== "" &&
+          result !== undefined &&
+          result !== null
+        ) {
+          setLoading(false);
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+              text: result as string,
+              isUser: false,
+            },
+          ]);
+
+          clearInterval(pollingInterval);
+        } else {
+          console.log("Result not ready, continuing to poll...");
+        }
+      };
+
+      // Start polling every 5 seconds
+      const pollingInterval = setInterval(pollResult, 5000);
+    }
+  };
 
   if (isDataLoading) {
     return (
@@ -294,134 +317,93 @@ export default function Page({ params }: { params: { resolveId: string } }) {
           </div>
         </div>
 
-        <div className="fixed bottom-5 right-5">
-          <button
-            onClick={() => setShow(true)}
-            className="px-5 py-3 flex items-center justify-center gap-x-2 bg-primary-600 rounded-full"
-          >
-            <ChatBubbleLeftRightIcon className="h-6 w-6 text-white" />
-            <span className="text-white font-semibold text-lg">OnlyChat</span>
-          </button>
-        </div>
-
-        {/* Chat popup start */}
-        <div
-          aria-live="assertive"
-          className="pointer-events-none fixed inset-0 flex items-end px-4 py-6 sm:items-start sm:p-6"
+        <Button
+          onClick={() => setIsModalOpen(true)}
+          className="fixed bottom-4 right-4 z-10"
+          aria-label="Open chat"
         >
-          <div className="flex w-full flex-col items-center space-y-4 sm:items-end absolute bottom-5 right-5 z-50">
-            <Transition show={show}>
-              <div className="pointer-events-auto w-full h-[500px] max-w-sm rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition data-[closed]:data-[enter]:translate-y-2 data-[enter]:transform data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-100 data-[enter]:ease-out data-[leave]:ease-in data-[closed]:data-[enter]:sm:translate-x-2 data-[closed]:data-[enter]:sm:translate-y-0">
-                <div className="p-4 relative">
-                  <div className="absolute -top-4 -right-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShow(false);
-                      }}
-                      className="p-1 inline-flex bg-white text-gray-400 border border-gray-400 rounded-full hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                    >
-                      <span className="sr-only">Close</span>
-                      <XMarkIcon aria-hidden="true" className="h-6 w-6" />
-                    </button>
-                  </div>
+          &#128172; Open Chat
+        </Button>
 
-                  {/* Chat UI start */}
-                  <div className="flex flex-col h-[470px]">
-                    <div className="flex-1 overflow-y-scroll">
-                      {!gaiaLoading ? (
-                        chatResponse ? (
-                          <div>
-                            <div className="flex items-start gap-2.5">
-                              <img
-                                className="w-8 h-8 rounded-full"
-                                src="https://docs.gaianet.ai/img/icon-white.png"
-                                alt="Gaia"
-                              />
-                              <div className="flex flex-col w-full max-w-[320px] leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl">
-                                <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                                  <span className="text-sm font-semibold text-gray-900">
-                                    GaiaNet
-                                  </span>
-                                  <span className="text-xs font-normal text-gray-500">
-                                    {new Date().toLocaleTimeString()}
-                                  </span>
-                                </div>
-                                <div className="text-sm font-normal py-2.5 text-gray-900">
-                                  <Markdown>{chatResponse}</Markdown>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-start gap-2.5">
-                            <img
-                              className="w-8 h-8 rounded-full"
-                              src="https://docs.gaianet.ai/img/icon-white.png"
-                              alt="Gaia"
-                            />
-                            <div className="flex flex-col w-full max-w-[320px] leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl">
-                              <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                                <span className="text-sm font-semibold text-gray-900">
-                                  GaiaNet
-                                </span>
-                                <span className="text-xs font-normal text-gray-500">
-                                  {new Date().toLocaleTimeString()}
-                                </span>
-                              </div>
-                              <div className="text-sm font-normal py-0.5 text-gray-900">
-                                Hi! How can I help you today?
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      ) : (
-                        <div className="flex items-start gap-2.5">
-                          <img
-                            className="w-8 h-8 rounded-full"
-                            src="https://docs.gaianet.ai/img/icon-white.png"
-                            alt="Gaia"
-                          />
-                          <div className="flex flex-col w-full max-w-[320px] leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl">
-                            <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                              <span className="text-sm font-semibold text-gray-900">
-                                GaiaNet
-                              </span>
-                              <span className="text-xs font-normal text-gray-500">
-                                {new Date().toLocaleTimeString()}
-                              </span>
-                            </div>
-                            <div className="text-sm font-normal pt-0.5 px-1 text-gray-900">
-                              <ThreeDots
-                                visible={true}
-                                height="30"
-                                width="30"
-                                color="#16a34a"
-                                radius="9"
-                                wrapperStyle={{}}
-                                ariaLabel="rotating-lines-loading"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-col items-center gap-2.5 justify-center">
-                      <input
-                        type="text"
-                        className="flex-1 rounded-md border border-gray-200 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-full"
-                        placeholder="Ask the GaiaGenie to suggest you projects to fund !"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                      />
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="w-full max-w-md rounded-lg shadow-lg overflow-hidden bg-black">
+              <div className=" p-4  flex justify-between items-center">
+                <h2 className="text-lg font-semibold text-white">ORA Genie</h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsModalOpen(false)}
+                  className=" hover:text-white hover:bg-red-500 text-white"
+                  aria-label="Close chat"
+                >
+                  &times;
+                </Button>
+              </div>
+              <ScrollArea className="h-80 p-4">
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`mb-2 ${
+                      message.isUser ? "text-right" : "text-left"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block p-2 rounded-lg ${
+                        message.isUser
+                          ? "bg-gray-400 text-white"
+                          : "bg-stone-500 text-white"
+                      }`}
+                    >
+                      {message.text}
+                    </span>
+                  </div>
+                ))}
+                {loading && (
+                  <div className="flex justify-start mb-2">
+                    <div className="bg-stone-500 text-white p-2 rounded-lg flex items-center space-x-2">
+                      <span>Thinking</span>
+                      <div className="flex space-x-1">
+                        <div
+                          className="w-2 h-2 bg-white rounded-full animate-bounce"
+                          style={{ animationDelay: "0s" }}
+                        ></div>
+                        <div
+                          className="w-2 h-2 bg-white rounded-full animate-bounce"
+                          style={{ animationDelay: "0.2s" }}
+                        ></div>
+                        <div
+                          className="w-2 h-2 bg-white rounded-full animate-bounce"
+                          style={{ animationDelay: "0.4s" }}
+                        ></div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
+              </ScrollArea>
+              <div className="p-4 border-t">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }}
+                  className="flex space-x-2"
+                >
+                  <Input
+                    type="text"
+                    placeholder="Type your message..."
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    className="flex-grow"
+                  />
+                  <Button type="submit" aria-label="Send message">
+                    Send
+                  </Button>
+                </form>
               </div>
-            </Transition>
+            </div>
           </div>
-        </div>
-        {/* Chat popup end */}
+        )}
       </MainLayout>
     );
   }
