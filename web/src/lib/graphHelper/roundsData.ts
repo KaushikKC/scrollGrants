@@ -2,15 +2,20 @@ import { request, gql } from "graphql-request";
 import { SUBGRAPH_URL } from "../const";
 export const getRoundsData = async () => {
   try {
-    const data = await request(
+    const data: any = await request(
       SUBGRAPH_URL,
       gql`
         query MyQuery {
           rounds {
+            endDate
             id
             isActive
             matchingAmount
-            metadata
+            owner
+            roundDescription
+            roundName
+            startDate
+            totalDistributed
             projects {
               id
             }
@@ -19,7 +24,7 @@ export const getRoundsData = async () => {
       `
     );
     console.log(data);
-    return data;
+    return data.rounds;
   } catch (error) {
     console.log(error);
   }

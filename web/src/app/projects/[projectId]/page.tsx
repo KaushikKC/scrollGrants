@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import { useRouter } from "next/router";
+
 import {
   CalendarIcon,
   EnvelopeIcon,
@@ -15,58 +15,14 @@ import MainLayout from "@/components/layouts/MainLayout";
 import Link from "next/link";
 import { RotatingLines } from "react-loader-spinner";
 import { useEffect, useState } from "react";
-import axios from "axios";
-import { NumericFormat } from "react-number-format";
-import { useWriteContract } from "wagmi";
+
+import { useAccount, useWriteContract } from "wagmi";
 import { contract } from "@/lib/contract";
 import { useSearchParams } from "next/navigation";
-
-const project = {
-  name: "Zamimbia - Local Water Hole Cleaning Project",
-  imageUrl:
-    "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1024&q=80",
-  coverImageUrl:
-    "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-  about: `
-    <p>Our Decentralized Finance (DeFi) Protocol aims to revolutionize traditional financial systems by leveraging blockchain technology. We're building a suite of smart contracts that enable lending, borrowing, and yield farming without intermediaries.</p>
-    <p>Our mission is to create an open, transparent, and accessible financial ecosystem that empowers users worldwide. By eliminating middlemen and reducing costs, we're democratizing access to financial services and fostering innovation in the crypto space.</p>
-  `,
-  details: {
-    Website: "https://defiprotocol.example.com",
-    Email: "contact@defiprotocol.example.com",
-    Category: "Decentralized Finance",
-    Team: "15 members",
-    Location: "Remote",
-    GitHub: "https://github.com/defiprotocol",
-    TotalValueLocked: "$50,000,000",
-    LaunchDate: "January 15, 2024",
-  },
-};
-
-const product = {
-  name: "Zip Tote Basket",
-  price: "$220",
-  rating: 3.9,
-  href: "#",
-  description:
-    "The Zip Tote Basket is the perfect midpoint between shopping tote and comfy backpack. With convertible straps, you can hand carry, should sling, or backpack this convenient and spacious bag. The zip top and durable canvas construction keeps your goods protected for all-day use.",
-  imageSrc:
-    "https://tailwindui.com/img/ecommerce-images/product-page-03-product-04.jpg",
-  imageAlt: "Back angled view with bag open and handles to the side.",
-  colors: [
-    {
-      name: "Washed Black",
-      bgColor: "bg-gray-700",
-      selectedColor: "ring-gray-700",
-    },
-    { name: "White", bgColor: "bg-white", selectedColor: "ring-gray-400" },
-    {
-      name: "Washed Gray",
-      bgColor: "bg-gray-500",
-      selectedColor: "ring-gray-500",
-    },
-  ],
-};
+import { getProjectData } from "@/lib/graphHelper/project";
+import { daysLeftToDate } from "@/app/resolves/page";
+import { parseEther } from "viem";
+// import { client } from "@/lib/viem";
 
 function ClaimFundsButton({
   resolveId,
@@ -170,18 +126,22 @@ export default function Page({ params }: { params: { projectId: string } }) {
   } = useWriteContract();
 
   const [amount, setAmount] = useState(0);
+  function splitString(input: string, delimiter: string = "-"): string[] {
+    return input.split(delimiter);
+  }
   const contribute = (e: { preventDefault: () => void }) => {
     e.preventDefault();
     setContributeLoading(true);
     console.log("Creating project...");
+    const ids = splitString(projectId as string);
     try {
       writeContract({
         address: contract.address as `0x${string}`, // Replace with the actual contract address
         abi: contract.abi,
         functionName: "donate",
         args: [
-          BigInt(projectId as string), // roundId
-          BigInt(1), // projectId - replace with actual project ID
+          BigInt(ids[0] as string), // roundId
+          BigInt(ids[1]), // projectId - replace with actual project ID
           BigInt(100), // amount - replace with actual amount
         ],
       });
@@ -192,19 +152,57 @@ export default function Page({ params }: { params: { projectId: string } }) {
     }
   };
 
-  // Getting project data from OSO
+  // Getting project data from graph
+  const [project, setProject] = useState<any>({});
+  const getProjectDataFromGraph = async () => {
+    console.log();
+    const data = await getProjectData(projectId.toString());
+    setProject(data);
+    console.log(data);
+  };
   useEffect(() => {
-    const projectData = async () => {
-      const res = await axios.get(`/api/proxy?projectId=${projectId}`);
-      console.log(res.data);
-      setProjectOSOData(res.data.data);
-      setProjectOSODataLoading(false);
-    };
-
-    if (projectId) {
-      projectData();
-    }
+    getProjectDataFromGraph();
   }, [projectId]);
+
+  // Top up
+
+  const [topUpAmount, setTopUpAmount] = useState("0");
+  const topUp = () => {
+    try {
+      writeContract({
+        address: contract.address as `0x${string}`,
+        abi: contract.abi,
+        functionName: "topUpBalance",
+        args: [parseEther(topUpAmount)],
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  //Fetch Balance
+  const [balance, setBalance] = useState("0");
+
+  //   const account = "0xd69a4dd0dfb261a8EF37F45925491C077EF1dBFb";
+  const account = useAccount().address;
+  const BalanceFetching = async () => {
+    // const fetchBalance = await client.readContract({
+    //   address: contract.address as `0x${string}`,
+    //   abi: contract.abi,
+    //   functionName: "balances",
+    //   args: [account],
+    // });
+    // if (fetchBalance) {
+    //   console.log(fetchBalance);
+    //   setBalance(fetchBalance.toString());
+    // }
+  };
+
+  useEffect(() => {
+    if (account) {
+      BalanceFetching();
+    }
+  }, [account]);
 
   return (
     <MainLayout>
@@ -213,22 +211,28 @@ export default function Page({ params }: { params: { projectId: string } }) {
           {/* Header */}
           <div className="relative h-64 sm:h-80 md:h-96">
             <img
-              src={project.coverImageUrl}
+              src={project && project.coverUrl}
               alt="Project cover"
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
             <div className="absolute bottom-0 left-0 right-0 p-6 flex items-end">
               <img
-                src={project.imageUrl}
-                alt={project.name}
+                src={
+                  project && project.logoUrl
+                    ? project.logoUrl
+                    : "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1024&q=80"
+                }
+                alt={project && project.projectName}
                 className="h-20 w-20 rounded-full border-4 border-white mr-4"
               />
               <div>
                 <h1 className="text-3xl font-bold text-white">
-                  {project.name}
+                  {project && project.projectName}
                 </h1>
-                <p className="text-lg text-gray-200">Project Description</p>
+                <p className="text-lg text-gray-200">
+                  {project && project.projectDescription}
+                </p>
               </div>
             </div>
           </div>
@@ -246,7 +250,13 @@ export default function Page({ params }: { params: { projectId: string } }) {
                 >
                   {/* ... (keep the existing SVG content) */}
                 </svg>
-                <span className="text-gray-700">0xD1F...f6Caa</span>
+                <span className="text-gray-700">
+                  {project && project.owner
+                    ? `${project.owner.slice(0, 6)}...${project.owner.slice(
+                        -6
+                      )}`
+                    : "Owner information not available"}
+                </span>
               </div>
               <div className="flex items-center">
                 <CalendarIcon className="h-5 w-5 text-gray-400 mr-2" />
@@ -260,7 +270,7 @@ export default function Page({ params }: { params: { projectId: string } }) {
                   passHref
                   className="text-primary-600 hover:underline"
                 >
-                  https://metaverse.career/home
+                  {project && project.website}
                 </Link>
               </div>
               <div className="flex items-center">
@@ -277,7 +287,7 @@ export default function Page({ params }: { params: { projectId: string } }) {
                   passHref
                   className="text-primary-600 hover:underline"
                 >
-                  metaverseai
+                  {project && project.twitterUrl}
                 </Link>
               </div>
 
@@ -314,16 +324,10 @@ export default function Page({ params }: { params: { projectId: string } }) {
                 {currentTab === "Project Details" && (
                   <div>
                     <h2 className="text-2xl font-semibold mb-4">
-                      About {project.name}
+                      About {project && project.projectName}
                     </h2>
                     <p className="text-gray-600 mb-6">
-                      The Metaverse Career website allows anyone to list and
-                      find a job in not only the Metaverse but also the web3
-                      ecosystem as a whole. Listings can be created for a small
-                      fee and will allow your organization to find potential
-                      candidates for your project in web3. Public good and
-                      Non-profit projects will be able to create listings for
-                      free.
+                      {project && project.projectDescription}
                     </p>
                     <h3 className="text-xl font-semibold mb-4">
                       Additional Information
@@ -337,8 +341,48 @@ export default function Page({ params }: { params: { projectId: string } }) {
                       </div>
                       <div>
                         <h4 className="font-medium text-gray-700">Team Size</h4>
-                        <p className="text-gray-600">1</p>
+                        <p className="text-gray-600">
+                          {(project && project.teamSize) || 1}
+                        </p>
                       </div>
+                    </div>
+                    <div className="mt-4">
+                      <label
+                        htmlFor="topUpAmount"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Top Up Amount
+                      </label>
+                      <div className="relative rounded-md shadow-sm mb-4">
+                        <input
+                          type="text"
+                          name="topUpAmount"
+                          id="topUpAmount"
+                          className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md h-6"
+                          placeholder="0.00"
+                          aria-describedby="topUpAmount-currency"
+                          value={topUpAmount}
+                          onChange={(e) => setTopUpAmount(e.target.value)}
+                        />
+                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                          <span
+                            className="text-gray-500 sm:text-sm"
+                            id="topUpAmount-currency"
+                          >
+                            ETH
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="w-full flex items-center justify-center rounded-md border border-transparent bg-orange-500 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                        onClick={async () => {
+                          console.log(topUpAmount);
+                          topUp();
+                        }}
+                      >
+                        Top Up
+                      </button>
                     </div>
                   </div>
                 )}
@@ -382,19 +426,21 @@ export default function Page({ params }: { params: { projectId: string } }) {
                         Funding received in current round
                       </p>
                       <p className="text-2xl font-bold text-primary-600">
-                        {product.price}
+                        {project && project.totalDonations}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Contributors</p>
                       <p className="text-2xl font-bold text-primary-600">
-                        {product.price}
+                        {project && project.donors ? project.donors.length : 0}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Time remaining</p>
                       <p className="text-2xl font-bold text-primary-600">
-                        {product.price} months
+                        {project && project.round && project.round.endDate
+                          ? `${daysLeftToDate(project.round.endDate)} days`
+                          : "0 days"}
                       </p>
                     </div>
                   </div>
@@ -410,7 +456,7 @@ export default function Page({ params }: { params: { projectId: string } }) {
                         <span className="text-gray-500 sm:text-sm">$</span>
                       </div>
                       <input
-                        type="number"
+                        type="text"
                         name="amount"
                         id="amount"
                         className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
@@ -424,10 +470,12 @@ export default function Page({ params }: { params: { projectId: string } }) {
                           className="text-gray-500 sm:text-sm"
                           id="amount-currency"
                         >
-                          USD
+                          ETH
                         </span>
                       </div>
                     </div>
+
+                    <div>Available Balance : {balance} ETH</div>
                   </div>
                   <button
                     type="submit"

@@ -310,10 +310,10 @@ export const ORAAI_ABI = [
 ];
 
 export const SUBGRAPH_URL =
-  "https://api.studio.thegraph.com/query/73364/scrollgrants/v0.0.17";
+  "https://api.studio.thegraph.com/query/73364/scrollgrants/version/latest";
 
 export const RESOLVE_CONTRACT_ADDRESS =
-  "0xfdDCbc3Bb1E96f8a970dF64C09393179FD50ab73";
+  "0x1bF67cdC38cfe17EC246F1cad6730C7Fa315f76B";
 
 export const RESOLVE_ABI = [
   {

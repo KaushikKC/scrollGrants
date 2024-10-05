@@ -7,29 +7,35 @@ export const getRoundData = async (id: number) => {
       SUBGRAPH_URL,
       gql`
         query MyQuery {
-          round(id: ${id}) {
+          round(id: "${id}") {
             id
-            matchingAmount
+            endDate
             isActive
-            metadata
+            matchingAmount
             owner
-            totalDistributed
+            roundName
+            startDate
+               roundDescription
             projects {
               id
-              metadata
+              logoUrl
+              osoName
+              owner
+              projectDescription
+              projectName
+              teamSize
               totalDonations
+              twitterUrl
+              website
+              coverUrl
             }
           }
         }
       `
     );
-    // console.log(data.round);
-    const metadata = stringToJsonObject(data.round.metadata);
+
     // console.log(metadata);
-    return {
-      ...data.round,
-      metadata,
-    };
+    return data.round;
   } catch (error) {
     console.log(error);
   }

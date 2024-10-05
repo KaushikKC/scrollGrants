@@ -11,26 +11,12 @@ import {
 import { usePopup } from "@/components/PopUpContext";
 import { useState, useEffect } from "react";
 import { Transition } from "@headlessui/react";
-import axios from "axios";
 import Markdown from "react-markdown";
 import { ThreeDots } from "react-loader-spinner";
 import { contract } from "@/lib/contract";
 import { useReadContract, useWriteContract } from "wagmi";
-
-interface Project {
-  network: string;
-  name: string;
-  openSourceObserverName: string;
-  website: string;
-  projectLogoUrl: string;
-  projectCoverUrl: string;
-  description: string;
-  createdDate: string; // ISO 8601 format date
-  twitterUrl: string;
-  ownerAddress: string;
-  fundingSources: string;
-  teamSize: number;
-}
+import { getRoundData } from "@/lib/graphHelper/roundData";
+import { daysLeftToDate } from "../page";
 
 const projects = [
   {
@@ -144,28 +130,19 @@ export default function Page({ params }: { params: { resolveId: string } }) {
   const [chatResponse, setChatResponse] = useState(null);
   const [gaiaLoading, setGaiaLoading] = useState(false);
   const [query, setQuery] = useState("");
+  const [data, setData] = useState<any>(null);
 
   const { resolveId } = params;
 
-  const handlePickBestProject = async () => {
-    setGaiaLoading(true);
-    try {
-      const response = await axios.get("/api/openai-proxy?query=" + query);
-      console.log(response.data);
-      setChatResponse(response.data);
-      setGaiaLoading(false);
-    } catch (error) {
-      console.error("Error calling API:", error);
-    }
+  const fetchRoundData = async () => {
+    const value = await getRoundData(parseInt(resolveId));
+    console.log(value);
+    setData(value);
   };
+  useEffect(() => {
+    fetchRoundData();
+  }, []);
 
-  // const { data, isLoading: isDataLoading } = useReadContract({
-  //     address: contract.address as `0x${string}`,
-  //     abi: contract.abi,
-  //     functionName: "rounds",
-  //     args: [resolveId],
-  // })
-  const data = null;
   const isDataLoading = false;
 
   if (isDataLoading) {
@@ -184,9 +161,7 @@ export default function Page({ params }: { params: { resolveId: string } }) {
           <div className="flex items-center gap-x-2 mb-4">
             <div>
               <h1 className="text-4xl font-bold text-gray-900">
-                {data && data[2]
-                  ? JSON.parse(data[2] as any)?.projectName
-                  : "Climate Coordination Funds"}
+                {data && data.roundName ? data.roundName : "Resolve Name"}
               </h1>
               <div className="mt-5 flex items-center mb-6">
                 <span className="text-base font-medium text-gray-900">
@@ -200,10 +175,10 @@ export default function Page({ params }: { params: { resolveId: string } }) {
             <div className="col-span-2 flex justify-between items-stretch mb-6 space-x-2">
               <div className="bg-gray-200 rounded-lg p-6 flex flex-col justify-between">
                 <span className="text-2xl font-semibold text-gray-900">
-                  {data && data[3]
-                    ? JSON.parse(data[3] as any)?.matchingPool || "0"
-                    : "0"}{" "}
-                  USDC
+                  {data && data.matchingAmount
+                    ? parseInt(data.matchingAmount) / 10 ** 18
+                    : 0}
+                  ETH
                 </span>
                 <span className="mt-2 block text-base text-gray-900">
                   Matching Pool
@@ -212,7 +187,12 @@ export default function Page({ params }: { params: { resolveId: string } }) {
               <div className="rounded-lg text-sm bg-gray-200 text-gray-600 text-center flex flex-col justify-center p-6">
                 <div>
                   Applications close in{" "}
-                  <span className="font-semibold">71 days, 16 minutes!</span>
+                  <span className="font-semibold">
+                    {data && data.endDate
+                      ? daysLeftToDate(data.endDate)
+                      : "N/A"}{" "}
+                    Days
+                  </span>
                 </div>
               </div>
               <Link
@@ -246,7 +226,14 @@ export default function Page({ params }: { params: { resolveId: string } }) {
               <CalendarIcon className="w-5 h-5 text-gray-500 ml-auto" />
             </span>
             <span className="text-sm text-gray-900 font-medium">
-              2024/08/14 09:30 IST - 2024/12/01 10:30 IST
+              {data && data.startDate && data.endDate ? (
+                <>
+                  {new Date(data.startDate).toLocaleDateString()} -{" "}
+                  {new Date(data.endDate).toLocaleDateString()}
+                </>
+              ) : (
+                "N/A"
+              )}
             </span>
           </div>
 
@@ -270,7 +257,14 @@ export default function Page({ params }: { params: { resolveId: string } }) {
               <CalendarIcon className="w-5 h-5 text-gray-500 ml-auto" />
             </span>
             <span className="text-sm text-gray-900 font-medium">
-              2024/08/15 09:30 IST - 2024/12/01 10:30 IST
+              {data && data.startDate && data.endDate ? (
+                <>
+                  {new Date(data.startDate).toLocaleDateString()} -{" "}
+                  {new Date(data.endDate).toLocaleDateString()}
+                </>
+              ) : (
+                "N/A"
+              )}
             </span>
           </div>
         </div>
@@ -283,9 +277,8 @@ export default function Page({ params }: { params: { resolveId: string } }) {
         </div>
 
         <p className="text-base text-gray-900 mb-6 mt-3">
-          {data && data[2]
-            ? JSON.parse(data[2] as any)?.description ||
-              "No description available"
+          {data && data.roundDescription
+            ? data.roundDescription
             : "No description available"}
         </p>
 
@@ -294,9 +287,10 @@ export default function Page({ params }: { params: { resolveId: string } }) {
         <div>
           <h1 className="text-2xl">Explore Projects</h1>
           <div className="mx-auto mt-5 grid max-w-2xl grid-cols-1 gap-8 lg:mx-0 lg:max-w-none lg:grid-cols-3">
-            {projects.map((project, index) => (
-              <Card key={index} {...project} />
-            ))}
+            {data &&
+              data.projects.map((project: any, index: any) => (
+                <Card key={index} {...project} />
+              ))}
           </div>
         </div>
 
@@ -420,14 +414,6 @@ export default function Page({ params }: { params: { resolveId: string } }) {
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                       />
-
-                      <button
-                        type="button"
-                        onClick={handlePickBestProject}
-                        className="mt-2 w-full flex items-center justify-center rounded-md border border-transparent bg-primary-600 py-3 text-sm font-bold text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-50"
-                      >
-                        Pick the best project to contribute to
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -441,43 +427,46 @@ export default function Page({ params }: { params: { resolveId: string } }) {
   }
 }
 
-const Card: React.FC<Project> = ({
-  name,
-  projectLogoUrl,
-  projectCoverUrl,
-  description,
+const Card: React.FC<any> = ({
+  projectName,
+  logoUrl,
+  coverUrl,
+  projectDescription,
+  id,
 }) => {
   const { setPopupData, togglePopupVisibility } = usePopup();
 
   const handleClick = () => {
-    setPopupData(name || "");
+    setPopupData(projectName || "");
     togglePopupVisibility(true); // Show the popup
   };
 
   return (
     <Link
-      href={`/projects/${name}`}
+      href={`/projects/${id}`}
       className="bg-gray-100 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
     >
       <div className="relative overflow-hidden" onClick={handleClick}>
         <img
           className="w-full h-48 object-cover"
-          src={projectCoverUrl}
+          src={coverUrl}
           alt="Project Banner"
         />
         <div className="absolute inset-0 bg-black opacity-30"></div>
         <img
           className="absolute top-4 left-4 w-16 h-16 rounded-full border-4 border-white shadow-lg"
-          src={projectLogoUrl}
+          src={logoUrl}
           alt="Profile"
         />
         <div className="absolute bottom-4 left-4 right-4">
-          <h3 className="text-xl font-bold text-white truncate">{name}</h3>
+          <h3 className="text-xl font-bold text-white truncate">
+            {projectName}
+          </h3>
         </div>
       </div>
       <div className="p-4">
         <div className="text-sm text-gray-600 line-clamp-3 h-18 overflow-hidden">
-          {description}
+          {projectDescription}
         </div>
       </div>
     </Link>

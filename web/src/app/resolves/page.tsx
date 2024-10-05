@@ -8,7 +8,7 @@ import { contract } from "@/lib/contract";
 import MainLayout from "@/components/layouts/MainLayout";
 import { getRoundsData } from "@/lib/graphHelper/roundsData";
 
-function daysLeftToDate(futureDate: any) {
+export function daysLeftToDate(futureDate: any) {
   const currentDate = new Date();
   const targetDate = new Date(futureDate);
 
