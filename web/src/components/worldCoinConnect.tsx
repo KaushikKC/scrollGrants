@@ -63,11 +63,7 @@ export default function WorldCoinConnect() {
               className="flex items-center font-bold text-lg px-4 py-2 bg-black text-white rounded-md cursor-pointer"
               onClick={open}
             >
-              <img
-                src="https://i.ibb.co/P4mg2Z9/image.png"
-                alt=""
-                className="rounded-full h-8 w-8 mr-2"
-              />
+              <img src="https://i.ibb.co/P4mg2Z9/image.png" alt="" className="rounded-full h-8 w-8 mr-2" />
               Get Started
             </button>
           )}

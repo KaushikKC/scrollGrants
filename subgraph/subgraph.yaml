@@ -8,7 +8,7 @@ dataSources:
     name: ScrollGrant
     network: scroll-sepolia
     source:
-      address: "0xfdDCbc3Bb1E96f8a970dF64C09393179FD50ab73"
+      address: "0x1bF67cdC38cfe17EC246F1cad6730C7Fa315f76B"
       abi: ScrollGrant
       startBlock: 6865088
     mapping:

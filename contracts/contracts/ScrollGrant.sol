@@ -1,3 +1,6 @@
+
+
+
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.24;
 
@@ -36,8 +39,11 @@ contract YieldGrants {
         string metadata,
         uint256 matchingAmount
     );
-
-    event RoundEdited(uint256 indexed roundId, string newMetadata);
+    
+    event RoundEdited(
+        uint256 indexed roundId,
+        string newMetadata
+    );
 
     event RoundDeactivated(
         uint256 indexed roundId,
@@ -59,7 +65,10 @@ contract YieldGrants {
         uint256 amount
     );
 
-    event BalanceToppedUp(address indexed user, uint256 amount);
+    event BalanceToppedUp(
+        address indexed user,
+        uint256 amount
+    );
 
     event ProjectFundsWithdrawn(
         uint256 indexed roundId,
@@ -94,10 +103,7 @@ contract YieldGrants {
     }
 
     // Edit the metadata of a round by the round owner
-    function editRoundMetadata(
-        uint256 rid,
-        string calldata newMetadata
-    ) external {
+    function editRoundMetadata(uint256 rid, string calldata newMetadata) external {
         require(rounds[rid].owner == msg.sender, "Not authorized");
         rounds[rid].metadata = newMetadata;
         emit RoundEdited(rid, newMetadata);
@@ -119,10 +125,7 @@ contract YieldGrants {
     // Donate to a project within a round
     function donate(uint256 rid, uint256 pid, uint256 amount) external {
         Round storage round = rounds[rid];
-        require(
-            round.isActive && balances[msg.sender] >= amount,
-            "Invalid donation"
-        );
+        require(round.isActive && balances[msg.sender] >= amount, "Invalid donation");
 
         Project storage project = round.projects[pid];
         require(project.owner != address(0), "Project not found");
@@ -137,10 +140,7 @@ contract YieldGrants {
     // Distribute funds among projects based on their donations
     function distributeFunds(uint256 rId) external {
         Round storage r = rounds[rId];
-        require(
-            r.owner == msg.sender && r.isActive,
-            "Not authorized or inactive"
-        );
+        require(r.owner == msg.sender && r.isActive, "Not authorized or inactive");
 
         uint256 tMatch = r.matchingAmount;
         uint256 tSqrtDonations = 0;
@@ -156,8 +156,7 @@ contract YieldGrants {
         // Distribute matching funds based on the square root of donations
         for (uint256 i = 0; i < r.projects.length; i++) {
             Project storage p = r.projects[i];
-            uint256 pShare = (Math.sqrt(p.totalDonations) * tMatch) /
-                tSqrtDonations;
+            uint256 pShare = (Math.sqrt(p.totalDonations) * tMatch) / tSqrtDonations;
             uint256 amountToSend = p.totalDonations + pShare;
             totalDistributed += amountToSend;
             p.pendingPayout = amountToSend;
@@ -167,7 +166,7 @@ contract YieldGrants {
         emit RoundDeactivated(rId, msg.sender, totalDistributed);
     }
 
-    // Withdraw project funds by the project owner
+   // Withdraw project funds by the project owner
     function withdrawProjectFunds(uint256 rId, uint256 pid) external {
         Project storage p = rounds[rId].projects[pid];
 
@@ -181,10 +180,7 @@ contract YieldGrants {
         p.pendingPayout = 0; // Reset payout to prevent re-entrancy
 
         // Ensure the contract has sufficient balance to transfer the funds
-        require(
-            address(this).balance >= amount,
-            "Insufficient contract balance"
-        );
+        require(address(this).balance >= amount, "Insufficient contract balance");
 
         // Transfer the amount to the project owner
         (bool success, ) = payable(msg.sender).call{value: amount}("");

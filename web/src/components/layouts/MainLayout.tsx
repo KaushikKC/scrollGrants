@@ -38,6 +38,8 @@ export default function Layout({
         </Link>
       </header>
 
+
+
       <section className="lg:w-full my-5 container">
         <div className="ring-1 ring-zinc-700 rounded-xl p-8 w-full">
           <div className="flex justify-center items-start flex-col">

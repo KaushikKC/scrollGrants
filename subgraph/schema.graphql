@@ -11,10 +11,10 @@ type Round @entity {
   transactionHash: Bytes!
 
   #Add ! to the fields that are required
-  # roundName: String
-  # startDate: String
-  # endDate: String
-  # roundDescription: String
+  roundName: String
+  startDate: String
+  endDate: String
+  roundDescription: String
 }
 
 type Project @entity {
@@ -28,16 +28,16 @@ type Project @entity {
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
-  #Add ! to the fields that are required
-  # projectName: String
-  # osoName: String
-  # website: String
-  # twitterUrl: String
-  # logoUrl: String
-  # coverUrl: String
-  # fundingSources: String
-  # teamSize: BigInt
-  # projectDescription: String
+
+  projectName: String
+  osoName: String
+  website: String
+  twitterUrl: String
+  logoUrl: String
+  coverUrl: String
+  fundingSources: String
+  teamSize: String
+  projectDescription: String
 }
 
 type BalanceToppedUp @entity(immutable: true) {

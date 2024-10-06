@@ -39,7 +39,9 @@ export function handleBalanceToppedUp(event: BalanceToppedUpEvent): void {
 export function handleProjectApplied(event: ProjectAppliedEvent): void {
   // Create or load the Project entity
   let projectId = event.params.projectId.toString();
-  let project = new Project(projectId);
+  let roundId = event.params.roundId.toString();
+  let uniqueProjectId = roundId + "-" + projectId;
+  let project = new Project(uniqueProjectId);
   project.round = event.params.roundId.toString(); // Set the associated round
   project.owner = event.params.owner;
   project.metadata = event.params.metadata;
@@ -49,36 +51,42 @@ export function handleProjectApplied(event: ProjectAppliedEvent): void {
   project.blockNumber = event.block.number;
   project.blockTimestamp = event.block.timestamp;
   project.transactionHash = event.transaction.hash;
+  let metadata = json.fromString(event.params.metadata);
+
+  let projectName = metadata.toObject().get("projectName"); // Retrieve project name
+
+  let osoName = metadata.toObject().get("osoName"); // Retrieve OSO name
+  let website = metadata.toObject().get("website"); // Retrieve website
+
+  let twitterUrl = metadata.toObject().get("twitterUrl"); // Retrieve Twitter URL
+  let logoUrl = metadata.toObject().get("logoUrl"); // Retrieve logo URL
+
+  let coverUrl = metadata.toObject().get("coverUrl"); // Retrieve cover URL
+
+  let teamSize = metadata.toObject().get("teamSize"); // Retrieve team size
+
+  let projectDescription = metadata.toObject().get("projectDescription"); // Retrieve project description
+  // Assign values to the project entity, handling nulls and converting types as necessary
+
+  project.projectName = projectName ? projectName.toString() : null; // Populate project name
+
+  project.osoName = osoName ? osoName.toString() : null; // Populate OSO name
+
+  project.website = website ? website.toString() : null; // Populate website
+
+  project.twitterUrl = twitterUrl ? twitterUrl.toString() : null; // Populate Twitter URL
+
+  project.logoUrl = logoUrl ? logoUrl.toString() : null; // Populate logo URL
+
+  project.coverUrl = coverUrl ? coverUrl.toString() : null; // Populate cover URL
+
+  project.teamSize = teamSize ? teamSize.toString() : null; // Populate team size
+
+  project.projectDescription = projectDescription
+    ? projectDescription.toString()
+    : null; // Populate project description
+
   project.save();
-  // Parse Metadata to fields
-  // let metadata: JSONValue = changetype<JSONValue>(event.params.metadata);
-
-  // let projectName = metadata.toObject().get("projectName"); // Retrieve project name
-  // let osoName = metadata.toObject().get("osoName"); // Retrieve OSO name
-  // let website = metadata.toObject().get("website"); // Retrieve website
-  // let twitterUrl = metadata.toObject().get("twitterUrl"); // Retrieve Twitter URL
-  // let logoUrl = metadata.toObject().get("logoUrl"); // Retrieve logo URL
-  // let coverUrl = metadata.toObject().get("coverUrl"); // Retrieve cover URL
-  // let fundingSources = metadata.toObject().get("fundingSources"); // Retrieve funding sources
-  // let teamSize = metadata.toObject().get("teamSize"); // Retrieve team size
-  // let projectDescription = metadata.toObject().get("projectDescription"); // Retrieve project description
-
-  // // Assign values to the project entity, handling nulls and converting types as necessary
-  // project.projectName = projectName ? projectName.toString() : null; // Populate project name
-  // project.osoName = osoName ? osoName.toString() : null; // Populate OSO name
-  // project.website = website ? website.toString() : null; // Populate website
-  // project.twitterUrl = twitterUrl ? twitterUrl.toString() : null; // Populate Twitter URL
-  // project.logoUrl = logoUrl ? logoUrl.toString() : null; // Populate logo URL
-  // project.coverUrl = coverUrl ? coverUrl.toString() : null; // Populate cover URL
-  // project.fundingSources = fundingSources ? fundingSources.toString() : null; // Populate funding sources
-  // project.teamSize = teamSize
-  //   ? BigInt.fromString(teamSize.toString())
-  //   : BigInt.fromI32(0); // Populate team size
-  // project.projectDescription = projectDescription
-  //   ? projectDescription.toString()
-  //   : null; // Populate project description
-
-  // project.save(); // Save the project entity
 
   // Create ProjectApplied entity
   let appliedEntity = new ProjectApplied(
@@ -98,8 +106,10 @@ export function handleProjectApplied(event: ProjectAppliedEvent): void {
 
 // Handle Project Donated event
 export function handleProjectDonated(event: ProjectDonatedEvent): void {
-  let projectId = event.params.projectId;
-  let project = Project.load(projectId.toString());
+  let projectId = event.params.projectId.toString();
+  let roundId = event.params.roundId.toString();
+  let uniqueProjectId = roundId + "-" + projectId;
+  let project = Project.load(uniqueProjectId);
 
   // Update the project entity
 
@@ -129,8 +139,10 @@ export function handleProjectDonated(event: ProjectDonatedEvent): void {
 export function handleProjectFundsWithdrawn(
   event: ProjectFundsWithdrawnEvent
 ): void {
-  let projectId = event.params.projectId;
-  let project = Project.load(projectId.toString());
+  let projectId = event.params.projectId.toString();
+  let roundId = event.params.roundId.toString();
+  let uniqueProjectId = roundId + "-" + projectId;
+  let project = Project.load(uniqueProjectId);
 
   if (project) {
     project.pendingPayout = project.pendingPayout.minus(event.params.amount);
@@ -164,25 +176,23 @@ export function handleRoundCreated(event: RoundCreatedEvent): void {
   round.blockNumber = event.block.number;
   round.blockTimestamp = event.block.timestamp;
   round.transactionHash = event.transaction.hash;
+
+  let metadata = json.fromString(event.params.metadata);
+  let roundName = metadata.toObject().get("roundName"); // Retrieve round name
+
+  let description = metadata.toObject().get("description"); // Retrieve round description
+  let startDate = metadata.toObject().get("startDate"); // Retrieve start date
+  let endDate = metadata.toObject().get("endDate"); // Retrieve end date
+
+  round.roundName = roundName ? roundName.toString() : null; // Populate round name
+
+  round.roundDescription = description ? description.toString() : null; // Populate round description
+
+  round.startDate = startDate ? startDate.toString() : null; // Populate start date
+
+  round.endDate = endDate ? endDate.toString() : null; // Populate end date
+
   round.save();
-
-  // log.info("Metadata is : {}", [event.params.metadata]);
-  // let metadata = json.try_fromString(event.params.metadata);
-  // log.info("Metadata is : {}", [
-  //   metadata.value.toObject().get("roundName")!.toString(),
-  // ]);
-  // let metadata = json.fromString(event.params.metadata).toObject();
-  // let roundName = metadata.get("roundName"); // Retrieve round name
-  // let description = metadata.get("description"); // Retrieve round description
-  // let startDate = metadata.get("startDate"); // Retrieve start date
-  // let endDate = metadata.get("endDate"); // Retrieve end date
-
-  // round.roundName = roundName ? roundName.toString() : null; // Populate round name
-  // round.roundDescription = description ? description.toString() : null; // Populate round description
-  // round.startDate = startDate ? startDate.toString() : null; // Populate start date
-  // round.endDate = endDate ? endDate.toString() : null; // Populate end date
-
-  // round.save(); // Save the round entity
 
   // Create RoundCreated entity
   let createdEntity = new RoundCreated(

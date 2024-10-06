@@ -21,10 +21,13 @@ import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 const queryClient = new QueryClient();
 import { PopupProvider } from "@/components/PopUpContext";
 
+
 const config = getDefaultConfig({
   appName: "resolve",
   projectId: process.env.NEXT_PUBLIC_PROJECT_ID || "",
-  chains: [scrollSepolia],
+  chains: [
+    scrollSepolia,
+  ],
   ssr: true, // If your dApp uses server side rendering (SSR)
 });
 
@@ -51,7 +54,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             enableSystem
             disableTransitionOnChange
           >
-            <PopupProvider>{children}</PopupProvider>
+            <PopupProvider>
+              {children}
+            </PopupProvider>
           </ThemeProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
