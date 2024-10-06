@@ -16,7 +16,7 @@ import { ThreeDots } from "react-loader-spinner";
 import { contract } from "@/lib/contract";
 import { useReadContract, useWriteContract } from "wagmi";
 import { getRoundData } from "@/lib/graphHelper/roundData";
-import { daysLeftToDate } from "../page";
+import { daysLeftToDate } from "../../../lib/daysLeft";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

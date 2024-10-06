@@ -1,15 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import {
-  CalendarIcon,
-  EnvelopeIcon,
-  GlobeAltIcon,
-  PhoneIcon,
-  CurrencyDollarIcon,
-  UserGroupIcon,
-  ClockIcon,
-} from "@heroicons/react/24/outline";
+import { CalendarIcon, GlobeAltIcon } from "@heroicons/react/24/outline";
 
 import MainLayout from "@/components/layouts/MainLayout";
 import Link from "next/link";
@@ -20,7 +12,7 @@ import { useAccount, useWriteContract } from "wagmi";
 import { contract } from "@/lib/contract";
 import { useSearchParams } from "next/navigation";
 import { getProjectData } from "@/lib/graphHelper/project";
-import { daysLeftToDate } from "@/app/resolves/page";
+import { daysLeftToDate } from "../../../lib/daysLeft";
 import { parseEther } from "viem";
 import { client } from "@/lib/viem";
 // import { client } from "@/lib/viem";
@@ -389,7 +381,7 @@ export default function Page({ params }: { params: { projectId: string } }) {
                 </Link>
               </div>
               {project && project.round && !project.round.isActive && (
-                <ClaimFundsButton resolveId={"0"} projectId={"1"} />
+                <ClaimFundsButton resolveId={ids[0]} projectId={ids[1]} />
               )}
             </div>
 
